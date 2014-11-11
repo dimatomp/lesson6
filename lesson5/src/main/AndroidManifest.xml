@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="net.dimatomp.lesson5">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.Light">
+        <activity
+            android:name="net.dimatomp.lesson5.FeedList"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="net.dimatomp.lesson5.FeedStorage"
+            android:authorities="net.dimatomp.feeds.provider"
+            android:enabled="true"
+            android:exported="false" />
+
+        <activity
+            android:name="net.dimatomp.lesson5.FeedEntries"
+            android:label="@string/title_activity_feed_entries"
+            android:parentActivityName="net.dimatomp.lesson5.FeedList">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="net.dimatomp.lesson5.FeedList" />
+        </activity>
+        <activity
+            android:name="net.dimatomp.lesson5.NewFeedForm"
+            android:label="@string/title_activity_new_feed_form"
+            android:parentActivityName="net.dimatomp.lesson5.FeedList"
+            android:theme="@android:style/Theme.Holo.Light.Dialog">
+            <intent-filter>
+                <action android:name="net.dimatomp.rss.ADD_NEW_FEED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="net.dimatomp.lesson5.FeedList" />
+        </activity>
+        <activity
+            android:name="net.dimatomp.lesson5.SimpleWebView"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_simple_web_view">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <data android:scheme="http" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="net.dimatomp.lesson5.RSSUpdater"
+            android:exported="false" />
+    </application>
+
+</manifest>

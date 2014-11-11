@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Lesson5</string>
+    <string name="action_settings">Settings</string>
+    <string name="empty_feed_list">You have specified no feeds.</string>
+    <string name="feed_no_name">(unnamed feed)</string>
+    <string name="entry_no_name">(unnamed entry)</string>
+    <string name="title_activity_feed_entries">Feed Entries</string>
+    <string name="feed_no_entries">No entries loaded</string>
+    <string name="read_more">Read more…</string>
+    <string name="action_new_feed">Add new feed</string>
+    <string name="hint_feed_xml">XML address</string>
+    <string name="title_activity_new_feed_form">New feed properties</string>
+    <string name="invalid_feed_uri">Failed to add the feed</string>
+    <string name="refresh">Refresh</string>
+    <string name="collapse_all">Collapse all</string>
+    <string name="expand_all">Expand all</string>
+    <string name="title_activity_simple_web_view">RSS Reader Web View</string>
+    <string name="action_remove_buttons">Hide remove buttons</string>
+
+</resources>
