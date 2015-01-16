@@ -180,6 +180,8 @@ public class FeedStorage extends ContentProvider {
 
             ContentValues values = new ContentValues();
             values.put(FEED_XML, "http://bash.im/rss/");
+            values.put(FEED_TITLE, "Bash.im");
+            values.put(FEED_DESCRIPTION, "Цитатник Рунета");
             db.insert("FEEDS", null, values);
         }
 

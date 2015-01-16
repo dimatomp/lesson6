@@ -2,7 +2,6 @@ package net.dimatomp.lesson5;
 
 import android.app.ListActivity;
 import android.app.LoaderManager;
-import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -11,8 +10,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.ArrayMap;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -23,7 +25,6 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import java.text.DateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
@@ -53,10 +54,11 @@ public class FeedEntries extends ListActivity implements LoaderManager.LoaderCal
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             getLoaderManager().restartLoader(0, getIntent().getExtras(), FeedEntries.this);
+            collapsedEntries.clear();
         }
     };
     Menu menu;
-    boolean expandingCollapsing = false, refreshButtonShown = true;
+    boolean refreshButtonShown = true;
     Set<Long> collapsedEntries = new HashSet<>();
 
     @Override
@@ -85,20 +87,15 @@ public class FeedEntries extends ListActivity implements LoaderManager.LoaderCal
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable(COLLAPSED_ENTRIES, collapsedEntries.toArray());
+        int cnt = 0;
+        long[] entries = new long[collapsedEntries.size()];
+        for (long a: collapsedEntries)
+            entries[cnt++] = a;
+        outState.putLongArray(COLLAPSED_ENTRIES, entries);
     }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        if (expandingCollapsing) {
-            int visibility = v.findViewById(R.id.short_description).getVisibility();
-            if (visibility == View.GONE)
-                collapsedEntries.add(id);
-            else
-                collapsedEntries.remove(id);
-            expandingCollapsing = false;
-            return;
-        }
         Cursor entry = (Cursor) getListAdapter().getItem(position);
         String address = entry.getString(entry.getColumnIndex(ENTRY_URL));
         if (address != null && !address.isEmpty()) {
@@ -107,20 +104,13 @@ public class FeedEntries extends ListActivity implements LoaderManager.LoaderCal
         }
     }
 
-    public void expandCollapse(View view) {
-        View parent = (View) view.getParent();
-        View content = parent.findViewById(R.id.short_description);
-        content.setVisibility(content.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-        parent.callOnClick();
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_feed_entries);
 
-        SimpleCursorAdapter adapter = new ExpandableItemCursorAdapter(this, R.layout.feed_entry, null,
+        SimpleCursorAdapter adapter = new ExpandableItemCursorAdapter(R.layout.feed_entry, null,
                 new String[]{ENTRY_TITLE, ENTRY_DATE, ENTRY_DESCRIPTION},
                 new int[]{android.R.id.text1, android.R.id.text2, R.id.short_description}, 0);
         adapter.setViewBinder(binder);
@@ -128,7 +118,8 @@ public class FeedEntries extends ListActivity implements LoaderManager.LoaderCal
         getLoaderManager().initLoader(0, getIntent().getExtras(), this);
 
         if (savedInstanceState != null && savedInstanceState.containsKey(COLLAPSED_ENTRIES))
-            Collections.addAll(collapsedEntries, ((Long[]) savedInstanceState.getSerializable(COLLAPSED_ENTRIES)));
+            for (long a: savedInstanceState.getLongArray(COLLAPSED_ENTRIES))
+                collapsedEntries.add(a);
 
         getContentResolver().registerContentObserver(RSSUpdater.REFRESH_ALL, false, observer);
         getContentResolver().registerContentObserver(RSSUpdater.refreshSpecificFeed(Integer.toString(getIntent().getIntExtra(EXTRA_FEED_ID, -1))), false, observer);
@@ -172,14 +163,49 @@ public class FeedEntries extends ListActivity implements LoaderManager.LoaderCal
         return super.onOptionsItemSelected(item);
     }
 
+    public void expandCollapse(View v) {
+        View parent = (View) v.getParent();
+        Long itemId = null;
+        for (Pair pair: viewToId)
+            if (pair != null && pair.view == parent) {
+                itemId = pair.id;
+                break;
+            }
+        View description = parent.findViewById(R.id.short_description);
+        if (description.getVisibility() == View.VISIBLE) {
+            description.setVisibility(View.GONE);
+            if (itemId != null)
+                collapsedEntries.add(itemId);
+        } else {
+            description.setVisibility(View.VISIBLE);
+            if (itemId != null)
+                collapsedEntries.remove(itemId);
+        }
+    }
+
+    class Pair {
+        final View view;
+        final long id;
+
+        Pair(View view, long id) {
+            this.view = view;
+            this.id = id;
+        }
+    }
+
+    int cPos = 0;
+    final Pair viewToId[] = new Pair[20];
+
     private class ExpandableItemCursorAdapter extends SimpleCursorAdapter {
-        private ExpandableItemCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {
-            super(context, layout, c, from, to, flags);
+        private ExpandableItemCursorAdapter(int layout, Cursor c, String[] from, int[] to, int flags) {
+            super(FeedEntries.this, layout, c, from, to, flags);
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View result = super.getView(position, convertView, parent);
+            viewToId[cPos] = new Pair(result, getItemId(position));
+            cPos = (cPos + viewToId.length) % viewToId.length;
             boolean collapsed = collapsedEntries.contains(getItemId(position));
             result.findViewById(R.id.short_description).setVisibility(collapsed ? View.GONE : View.VISIBLE);
             return result;
